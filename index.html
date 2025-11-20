@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥕 Cenourês - A Chegada</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff3e0;
+            color: #3e2723;
+            margin: 0;
+            padding: 20px;
+        }
+        #root {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 { color: #ff6f00; text-align: center; border-bottom: 2px solid #ff9800; padding-bottom: 10px; }
+        h2 { color: #d84315; margin-top: 25px; }
+        h3 { color: #ff9800; margin-top: 15px; }
+        .regras { background-color: #fff8e1; padding: 15px; border-left: 5px solid #ffb300; margin-bottom: 20px; }
+        .instrucoes { background-color: #e0f7fa; padding: 15px; border-left: 5px solid #00bcd4; margin-bottom: 20px; border-radius: 4px; }
+        .frase { font-style: italic; margin-bottom: 8px; font-size: 1.1em; background: #f0f0f0; padding: 5px; border-radius: 4px; display: inline-block; }
+        .tarefa-item { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; background-color: #fafafa; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        button.verificar-btn {
+            background-color: #ff6f00;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        button.verificar-btn:hover { background-color: #e65100; }
+        .feedback { margin-left: 10px; font-weight: bold; display: inline-block; }
+        .acerto { color: #2e7d32; }
+        .erro { color: #c62828; }
+        .dica { font-size: 0.9em; color: #757575; margin-top: 5px; font-style: italic; }
+        .parabens { text-align: center; padding: 20px; background-color: #c8e6c9; color: #1b5e20; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+        
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ff9800; }
+        .tab-button {
+            background-color: #ffcc80;
+            color: #5d4037;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+        .tab-button.active { background-color: #ff6f00; color: white; opacity: 1; }
+        .tab-button:disabled { background-color: #e0e0e0; color: #9e9e9e; cursor: not-allowed; opacity: 0.5; }
+        
+        .bloco-content { border: 1px solid #ffb300; padding: 20px; border-radius: 0 5px 5px 5px; background-color: #fffaf0; }
+        .bloco-info { background-color: #ffe0b2; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: 500; }
+        .desafio-final { background: linear-gradient(135deg, #ff6f00, #ff9800); color: white; padding: 15px; border-radius: 8px; margin-top: 20px; font-weight: bold; text-align: center; }
+        .enigma { background-color: #fff3e0; border: 2px dashed #ff6f00; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        
+        .glifo-container { display: inline-block; margin: 10px; text-align: center; vertical-align: top; }
+        .glifo-svg { 
+            width: 140px; 
+            height: 140px; 
+            background: linear-gradient(135deg, #3e2723, #271c19); 
+            border-radius: 50%; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
+            border: 2px solid #5d4037;
+        }
+        .animado { animation: spin 60s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .glifos-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 20px 0; padding: 20px; background: #fafafa; border-radius: 8px; }
+        
+        .input-gerador {
+            width: 100%;
+            max-width: 400px;
+            background-color: #3e2723;
+            color: #ffcc80;
+            font-size: 1.2em;
+            text-align: center;
+            padding: 15px;
+            border: 2px solid #ff6f00;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- FUNÇÃO DE NORMALIZAÇÃO MELHORADA ---
+        // Remove pontuações (.,!?;:) para evitar erros de validação e na geração de glifos
+        const normalize = (text) => {
+            if (!text) return '';
+            return text.toLowerCase()
+                .replace(/[.,!?;:]/g, "") // Remove pontuação
+                .trim()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+        };
+
+        // --- COMPONENTE: GERADOR DE GLIFOS ---
+        const GlifoCenoures = ({ frase, animado = false }) => {
+            const palavras = normalize(frase).split(/[\s-]+/).filter(p => p.length > 0);
+            
+            // Lógica de Detecção
+            const temFlo = palavras.some(p => p.includes('flo'));
+            const listaVerbos = ['lemu', 'sami', 'liu'];
+            const verbosEncontrados = palavras.filter(p => listaVerbos.includes(p));
+            const listaSujeitos = ['rulo', 'miri', 'tamo', 'karo'];
+            const sujeitosEncontrados = palavras.filter(p => listaSujeitos.some(s => p.includes(s)));
+            const listaAtributos = ['zafen', 'kolen', 'belen', 'luren', 'firi'];
+            const atributosEncontrados = palavras.filter(p => listaAtributos.includes(p));
+            const mapaNumeros = {
+                'op': 1, '1': 1, 'dul': 2, '2': 2, 'tren': 3, '3': 3,
+                'for': 4, '4': 4, 'sinc': 5, '5': 5
+            };
+            
+            let valorNumericoTotal = 0;
+            palavras.forEach(p => {
+                if (mapaNumeros[p]) valorNumericoTotal += mapaNumeros[p];
+                else if (!isNaN(p) && p !== '' && !listaVerbos.includes(p) && !listaSujeitos.includes(p)) valorNumericoTotal += parseInt(p);
+            });
+
+            const corTinta = "rgba(255, 255, 255, 0.85)"; 
+
+            const getRotation = (index, total) => {
+                if (total === 0) return 0;
+                return (360 / total) * index;
+            };
+
+            return (
+                <div className="glifo-container">
+                    <svg viewBox="0 0 100 100" className={`glifo-svg ${animado ? 'animado' : ''}`}>
+                        {/* 1. PLURAL (FLO) */}
+                        {temFlo ? (
+                            <circle cx="50" cy="50" r="48" fill="none" stroke={corTinta} strokeWidth="2" strokeDasharray="8 4" opacity="0.6" />
+                        ) : (
+                            <circle cx="50" cy="50" r="48" fill="none" stroke={corTinta} strokeWidth="0.5" opacity="0.1" />
+                        )}
+
+                        {/* 2. NÚMEROS */}
+                        {valorNumericoTotal > 0 && Array.from({ length: valorNumericoTotal }).map((_, i) => (
+                            <line key={`num-${i}`} x1="50" y1="35" x2="50" y2="25" stroke={corTinta} strokeWidth="3" transform={`rotate(${(360 / valorNumericoTotal) * i} 50 50)`} />
+                        ))}
+
+                        {/* 3. SUJEITOS */}
+                        {sujeitosEncontrados.map((suj, i) => {
+                            const raiz = listaSujeitos.find(s => suj.includes(s)); 
+                            const rot = getRotation(i, sujeitosEncontrados.length);
+                            return (
+                                <g key={`suj-${i}`} transform={`rotate(${rot} 50 50)`}>
+                                    {raiz === 'rulo' && <path d="M50 15 L58 30 L42 30 Z" fill="none" stroke={corTinta} strokeWidth="2" />}
+                                    {raiz === 'miri' && <circle cx="50" cy="22" r="6" fill="none" stroke={corTinta} strokeWidth="2" />}
+                                    {raiz === 'tamo' && <rect x="44" y="16" width="12" height="12" fill="none" stroke={corTinta} strokeWidth="2" />}
+                                    {raiz === 'karo' && <path d="M50 10 L56 22 L50 34 L44 22 Z" fill="none" stroke={corTinta} strokeWidth="2" />}
+                                </g>
+                            );
+                        })}
+
+                        {/* 4. ATRIBUTOS */}
+                        {atributosEncontrados.map((atrib, i) => {
+                            const rot = getRotation(i, atributosEncontrados.length) + 45; 
+                            return (
+                                <g key={`atrib-${i}`} transform={`rotate(${rot} 50 50)`}>
+                                    {atrib === 'zafen' && <path d="M50 80 L55 95 L45 95 Z" fill={corTinta} />}
+                                    {atrib === 'kolen' && <path d="M35 85 Q50 98 65 85" fill="none" stroke={corTinta} strokeWidth="3" strokeLinecap="round" />}
+                                    {atrib === 'belen' && <circle cx="50" cy="90" r="4" fill={corTinta} />}
+                                    {atrib === 'luren' && <line x1="50" y1="75" x2="50" y2="98" stroke={corTinta} strokeWidth="4" />}
+                                    {atrib === 'firi' && <path d="M40 85 L45 95 L50 85 L55 95 L60 85" fill="none" stroke={corTinta} strokeWidth="2" />}
+                                </g>
+                            );
+                        })}
+
+                        {/* 5. VERBOS */}
+                        {verbosEncontrados.map((verbo, i) => {
+                            const offset = i * 2;
+                            return (
+                                <g key={`verbo-${i}`}>
+                                    {verbo === 'lemu' && <circle cx={50 + offset} cy={50 + offset} r="13" fill="#fff" fillOpacity="0.9" />}
+                                    {verbo === 'sami' && <rect x={38 + offset} y={38 + offset} width="24" height="24" fill="#fff" transform={`rotate(45 ${50 + offset} ${50 + offset})`} fillOpacity="0.9" />}
+                                    {verbo === 'liu' && <path d={`M${35 + offset} ${40 + offset} L${65 + offset} ${40 + offset} L${50 + offset} ${65 + offset} Z`} fill="#fff" fillOpacity="0.9" />}
+                                </g>
+                            );
+                        })}
+                        
+                        <circle cx="50" cy="50" r="35" fill="none" stroke={corTinta} strokeWidth="0.5" opacity="0.3" />
+                    </svg>
+                    <div style={{fontSize: '0.8em', fontFamily: 'monospace', marginTop: '5px'}}>{frase}</div>
+                </div>
+            );
+        };
+
+        // --- GABARITO E CONFIGURAÇÕES ---
+        const gabarito = {
+            bloco1_zafen: 'preto', bloco1_kolen: 'feliz', bloco1_belen: 'pequeno',
+            bloco1_frase1_trad: 'o gato e preto', bloco1_frase2_trad: 'o cachorro esta feliz', bloco1_frase3_trad: 'o gato e pequeno',
+            bloco2_luren: 'grande', bloco2_firi: 'assustado',
+            bloco2_frase4_trad: 'o cachorro e grande', bloco2_frase5_trad: 'o gato esta assustado',
+            bloco3_tamo: ['menina', 'a menina'], bloco3_karo: ['passaro', 'o passaro'],
+            bloco3_frase6_trad: 'o passaro e preto', bloco3_frase7_trad: 'a menina esta feliz', bloco3_frase8_trad: 'o passaro e pequeno',
+            bloco3_frase9_trad: 'a menina e o passaro sao valentes', bloco3_frase10_trad: 'o gato e o cachorro estao felizes',
+            bloco4_parte1: ['3', 'tres'], bloco4_parte2: ['2', 'dois', 'duas'], bloco4_conjuncao: ['e','+','mais'],
+            bloco4_prefixo: ['flo', 'flo-'], bloco4_plural_regra: ['adiciona flo no inicio', 'coloca flo antes', 'flo antes da palavra', 'prefixo flo'],
+            bloco4_enigma1: '16', bloco4_enigma2: ['a menina tem 3 gatos pretos', 'a menina tem tres gatos pretos'],
+            bloco4_frase_complexa: ['os 2 cachorros grandes estao felizes','os dois cachorros grandes estao felizes'],
+        };
+
+        const chavesBloco1 = ['bloco1_zafen', 'bloco1_kolen', 'bloco1_belen', 'bloco1_frase1_trad', 'bloco1_frase2_trad', 'bloco1_frase3_trad'];
+        const chavesBloco2 = ['bloco2_luren', 'bloco2_firi', 'bloco2_frase4_trad', 'bloco2_frase5_trad', 'bloco2_frase_propria'];
+        const chavesBloco3 = ['bloco3_tamo', 'bloco3_karo', 'bloco3_frase6_trad', 'bloco3_frase7_trad', 'bloco3_frase8_trad', 'bloco3_frase9_trad', 'bloco3_frase10_trad'];
+        const chavesBloco4 = ['bloco4_parte1', 'bloco4_parte2', 'bloco4_conjuncao', 'bloco4_prefixo', 'bloco4_plural_regra', 'bloco4_enigma1', 'bloco4_enigma2', 'bloco4_frase_complexa'];
+
+        const Feedback = ({ status }) => {
+            if (!status) return null;
+            return <span className={`feedback ${status}`}>{status === 'acerto' ? '✅ Correto!' : '❌ Tente novamente'}</span>;
+        };
+
+        const TarefaInput = ({ chave, label, placeholder, value, onChange, onVerify, status, isCreative }) => (
+            <div className="tarefa-item">
+                <label htmlFor={chave}><strong>{label}</strong></label>
+                <input type="text" id={chave} name={chave} placeholder={placeholder || "Sua resposta aqui..."} value={value || ''} onChange={onChange} autoComplete="off" />
+                <br/>
+                <button className="verificar-btn" onClick={() => onVerify(chave, isCreative)}>Verificar</button>
+                <Feedback status={status} />
+                {isCreative && <div className="dica">Deve ter pelo menos 3 palavras. Anote no caderno para falar depois.</div>}
+            </div>
+        );
+
+        const App = () => {
+            const [respostas, setRespostas] = React.useState({});
+            const [verificado, setVerificado] = React.useState({});
+            const [blocoAtivo, setBlocoAtivo] = React.useState('bloco1');
+            const [nivelLiberado, setNivelLiberado] = React.useState(1);
+            const [fraseVisual, setFraseVisual] = React.useState(''); 
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setRespostas(prev => ({ ...prev, [name]: value }));
+                setVerificado(prev => ({ ...prev, [name]: null }));
+            };
+
+            const verificarResposta = (chave, isCreative = false) => {
+                const respostaAluno = normalize(respostas[chave]);
+                let isCorrect = false;
+                if (isCreative) isCorrect = respostaAluno.length > 5 && respostaAluno.includes(' ');
+                else {
+                    const respGabarito = gabarito[chave];
+                    if (Array.isArray(respGabarito)) isCorrect = respGabarito.some(g => normalize(g) === respostaAluno);
+                    else isCorrect = normalize(respGabarito) === respostaAluno;
+                }
+                const novoStatus = isCorrect ? 'acerto' : 'erro';
+                const novoVerificado = { ...verificado, [chave]: novoStatus };
+                setVerificado(novoVerificado);
+                checarProgressao(novoVerificado);
+            };
+
+            const checarProgressao = (statusAtual) => {
+                if (chavesBloco1.every(k => statusAtual[k] === 'acerto') && nivelLiberado < 2) { setNivelLiberado(2); alert("Parabéns! Você desbloqueou o Bloco 2!"); }
+                if (chavesBloco2.every(k => statusAtual[k] === 'acerto') && nivelLiberado < 3) { setNivelLiberado(3); alert("Excelente! Você desbloqueou o Bloco 3!"); }
+                if (chavesBloco3.every(k => statusAtual[k] === 'acerto') && nivelLiberado < 4) { setNivelLiberado(4); alert("🎉 INCRÍVEL! Você desbloqueou o BLOCO 4!"); }
+            };
+
+            const renderBloco1 = () => (
+                <div className="bloco-content">
+                    <h2>🟧 BLOCO 1 – Descobrindo o significado</h2>
+                    <div className="bloco-info"><p>Regra: <strong>VERBO + SUJEITO + ATRIBUTO</strong></p><p>Verbos: <strong>lému</strong> ("é"), <strong>sámi</strong> ("está")</p></div>
+                    <div className="frase">1. "lému rulo zafen."</div><br/>
+                    <div className="frase">2. "sámi miri kolen."</div><br/>
+                    <div className="frase">3. "lému rulo belen."</div>
+                    <h3>🎨 Visualize os Glifos</h3>
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="lému rulo zafen." />
+                        <GlifoCenoures frase="sámi miri kolen." />
+                        <GlifoCenoures frase="lému rulo belen." />
+                    </div>
+                    <h3>Informações conhecidas:</h3>
+                    <ul><li>lému rulo zafen. = O gato é preto.</li><li>sámi rulo kolen. = O gato está feliz.</li><li>lému miri belen. = O cachorro é pequeno.</li></ul>
+                    <hr />
+                    <h3>📝 Tarefas</h3>
+                    <TarefaInput chave="bloco1_zafen" label="1. ZAFEN significa:" onChange={handleInputChange} value={respostas.bloco1_zafen} onVerify={verificarResposta} status={verificado.bloco1_zafen} placeholder="Significado" />
+                    <TarefaInput chave="bloco1_kolen" label="2. KOLEN significa:" onChange={handleInputChange} value={respostas.bloco1_kolen} onVerify={verificarResposta} status={verificado.bloco1_kolen} placeholder="Significado" />
+                    <TarefaInput chave="bloco1_belen" label="3. BELEN significa:" onChange={handleInputChange} value={respostas.bloco1_belen} onVerify={verificarResposta} status={verificado.bloco1_belen} placeholder="Significado" />
+                    <hr />
+                    <h3>Tradução</h3>
+                    <TarefaInput chave="bloco1_frase1_trad" label='4. Tradução da Frase 1 "lému rulo zafen":' onChange={handleInputChange} value={respostas.bloco1_frase1_trad} onVerify={verificarResposta} status={verificado.bloco1_frase1_trad} placeholder="Digite a frase traduzida" />
+                    <TarefaInput chave="bloco1_frase2_trad" label='5. Tradução da Frase 2 "sámi miri kolen":' onChange={handleInputChange} value={respostas.bloco1_frase2_trad} onVerify={verificarResposta} status={verificado.bloco1_frase2_trad} placeholder="Digite a frase traduzida" />
+                    <TarefaInput chave="bloco1_frase3_trad" label='6. Tradução da Frase 3 "lému rulo belen":' onChange={handleInputChange} value={respostas.bloco1_frase3_trad} onVerify={verificarResposta} status={verificado.bloco1_frase3_trad} placeholder="Digite a frase traduzida" />
+                    {nivelLiberado === 1 && chavesBloco1.every(k => verificado[k] === 'acerto') && <div className="parabens">Tudo certo! Vá para o Bloco 2.</div>}
+                </div>
+            );
+
+            const renderBloco2 = () => (
+                <div className="bloco-content">
+                    <h2>🟧 BLOCO 2 – Novas palavras</h2>
+                    <div className="bloco-info">
+                        <p>Vocabulário conhecido: rulo (gato), miri (cachorro), zafen (preto), kolen (feliz), belen (pequeno).</p>
+                    </div>
+
+                    <h3>Novos atributos misteriosos:</h3>
+                    <ul>
+                        <li><strong>luren</strong></li>
+                        <li><strong>firi</strong></li>
+                    </ul>
+
+                    <h3>Frases:</h3>
+                    <div className="frase">4. "lému miri luren."</div><br/>
+                    <div className="frase">5. "sámi rulo firi."</div>
+
+                    <h3>Informações conhecidas:</h3>
+                    <ul>
+                        <li>lému rulo luren. = O gato é grande.</li>
+                        <li>sámi miri firi. = O cachorro está assustado.</li>
+                    </ul>
+
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="lému miri luren" />
+                        <GlifoCenoures frase="sámi rulo firi" />
+                    </div>
+
+                    <hr />
+                    <h3>📝 Tarefas</h3>
+                    <TarefaInput chave="bloco2_luren" label="1. LUREN significa:" onChange={handleInputChange} value={respostas.bloco2_luren} onVerify={verificarResposta} status={verificado.bloco2_luren} placeholder="Significado" />
+                    <TarefaInput chave="bloco2_firi" label="2. FIRI significa:" onChange={handleInputChange} value={respostas.bloco2_firi} onVerify={verificarResposta} status={verificado.bloco2_firi} placeholder="Significado" />
+
+                    <hr />
+                    <h3>Tradução e Criação</h3>
+                    <TarefaInput chave="bloco2_frase4_trad" label='3. Tradução da Frase 4 "lému miri luren":' onChange={handleInputChange} value={respostas.bloco2_frase4_trad} onVerify={verificarResposta} status={verificado.bloco2_frase4_trad} placeholder="Frase em português" />
+                    <TarefaInput chave="bloco2_frase5_trad" label='4. Tradução da Frase 5 "sámi rulo firi":' onChange={handleInputChange} value={respostas.bloco2_frase5_trad} onVerify={verificarResposta} status={verificado.bloco2_frase5_trad} placeholder="Frase em português" />
+                    
+                    <TarefaInput 
+                        chave="bloco2_frase_propria" 
+                        label="5. Crie uma frase em Cenourês (VERBO + SUJEITO + ATRIBUTO):" 
+                        onChange={handleInputChange} value={respostas.bloco2_frase_propria} onVerify={(k) => verificarResposta(k, true)} status={verificado.bloco2_frase_propria} isCreative={true} placeholder="Escreva em Cenourês"
+                    />
+                    <hr />
+                    {nivelLiberado === 2 && chavesBloco2.every(k => verificado[k] === 'acerto') && 
+                        <div className="parabens">Ótimo! O Bloco 3 foi desbloqueado.</div>
+                    }
+
+                </div>
+            );
+
+            const renderBloco3 = () => (
+                <div className="bloco-content">
+                    <h2>🟧 BLOCO 3 – Novos sujeitos</h2>
+                    
+                    <h3>Novos sujeitos:</h3>
+                    <ul>
+                        <li><strong>tamo</strong></li>
+                        <li><strong>karo</strong></li>
+                    </ul>
+
+                    <h3>Informações conhecidas:</h3>
+                    <ul>
+                        <li><strong>Lému karo zafen.</strong> = O pássaro é preto.</li>
+                        <li><strong>Lému tamo belen.</strong> = A menina é pequena.</li>
+
+                    </ul>
+
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="lému karo zafen" />
+                        <GlifoCenoures frase="Lému tamo belen" />
+                    </div>
+                    <hr />
+
+                    <h3>📝 Tarefas</h3>
+                    <TarefaInput chave="bloco3_tamo" label="1. TAMO significa:" onChange={handleInputChange} value={respostas.bloco3_tamo} onVerify={verificarResposta} status={verificado.bloco3_tamo} placeholder="Significado" />
+                    <TarefaInput chave="bloco3_karo" label="2. KARO significa:" onChange={handleInputChange} value={respostas.bloco3_karo} onVerify={verificarResposta} status={verificado.bloco3_karo} placeholder="Significado" />
+                    
+                    <hr />
+
+                    <h3>Tradução</h3>
+                    <TarefaInput chave="bloco3_frase6_trad" label='3. Tradução da Frase 6 "lému karo zafen.":' onChange={handleInputChange} value={respostas.bloco3_frase6_trad} onVerify={verificarResposta} status={verificado.bloco3_frase6_trad} placeholder="Frase em português" />
+                    <TarefaInput chave="bloco3_frase7_trad" label='4. Tradução da Frase 7 "sámi tamo kolen.":' onChange={handleInputChange} value={respostas.bloco3_frase7_trad} onVerify={verificarResposta} status={verificado.bloco3_frase7_trad} placeholder="Frase em português" />
+                    <TarefaInput chave="bloco3_frase8_trad" label='5. Tradução da Frase 8 "lému karo belen.":' onChange={handleInputChange} value={respostas.bloco3_frase8_trad} onVerify={verificarResposta} status={verificado.bloco3_frase8_trad} placeholder="Frase em português" />
+
+                    <h3>Desafio Duplo</h3>
+                    <p className="dica">Observe o uso do "<strong>-e-</strong>" entre palavras!</p>
+                    <p>
+                      <strong>firi</strong> é uma palavra <strong>polissemica</strong>, pode ser traduzido tanto como
+                      <em> assustado</em> quanto como <em>valente</em> dependendo do contexto.
+                    </p>
+                    <TarefaInput chave="bloco3_frase9_trad" label='6. Tradução da Frase "lému tamo-e-karo firi.":' onChange={handleInputChange} value={respostas.bloco3_frase9_trad} onVerify={verificarResposta} status={verificado.bloco3_frase9_trad} placeholder="Frase em português" />
+                    <TarefaInput chave="bloco3_frase10_trad" label='7. Tradução da Frase "sámi rulo-e-miri kolen.":' onChange={handleInputChange} value={respostas.bloco3_frase10_trad} onVerify={verificarResposta} status={verificado.bloco3_frase10_trad} placeholder="Frase em português" />
+
+                    {nivelLiberado === 3 && chavesBloco3.every(k => verificado[k] === 'acerto') && 
+                        <div className="parabens">🎉 Fenomenal! Prepare-se para o DESAFIO SUPREMO...</div>
+                    }
+
+                </div>
+            );
+
+            const renderBloco4 = () => (
+                <div className="bloco-content">
+                    <div className="desafio-final">
+                        <h2 style={{margin: '0', color: 'white'}}>⚡ BLOCO 4 – DESAFIO SUPREMO ⚡</h2>
+                        <p style={{margin: '5px 0 0 0'}}>Números, Plurais e Enigmas Matemáticos!</p>
+                    </div>
+                    <div className="bloco-info" style={{backgroundColor: '#ffebee', borderLeft: '5px solid #d32f2f'}}>
+                        <p><strong>⚠️ ATENÇÃO:</strong> Este desafio combina GRAMÁTICA + MATEMÁTICA!</p>
+                    </div>
+                    <h3>🔢 PARTE 1: Números em Cenourês</h3>
+                    <div className="enigma">
+                        <div className="frase">"op-e-op = dul"</div><br/>
+                        <div className="frase">"op-e-op-e-op = tren"</div><br/>
+                        <div className="frase">"dul-e-dul = for"</div><br/>
+                        <div className="frase">"tren-e-dul = sinc"</div>
+                    </div>
+                    <p><strong>Informação conhecida:</strong> "op" = 1 (um)</p>
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="op-e-op-e-op" />
+                    </div>
+                    <TarefaInput chave="bloco4_parte1" label="1. Quanto vale TREN em português?" onChange={handleInputChange} value={respostas.bloco4_parte1} onVerify={verificarResposta} status={verificado.bloco4_parte1} placeholder="Digite o número" />
+                    <TarefaInput chave="bloco4_parte2" label="2. Quanto vale DUL em português?" onChange={handleInputChange} value={respostas.bloco4_parte2} onVerify={verificarResposta} status={verificado.bloco4_parte2} placeholder="Digite o número" />
+                    <TarefaInput chave="bloco4_conjuncao" label="3. O que significa '-e-'?" onChange={handleInputChange} value={respostas.bloco4_conjuncao} onVerify={verificarResposta} status={verificado.bloco4_conjuncao} placeholder="Operação matemática" />
+                    <hr />
+                    <h3>📚 PARTE 2: Descobrindo o Plural</h3>
+                    <div className="enigma">
+                        <div className="frase">"lému flo-rulo zafen." = Os gatos são pretos.</div><br/>
+                    </div>
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="lému flo-rulo zafen" />
+                    </div>
+                    <TarefaInput chave="bloco4_prefixo" label="4. Qual prefixo indica PLURAL em Cenourês?" onChange={handleInputChange} value={respostas.bloco4_prefixo} onVerify={verificarResposta} status={verificado.bloco4_prefixo} placeholder="Digite o prefixo" />
+                    <TarefaInput chave="bloco4_plural_regra" label="5. Explique a regra do plural:" onChange={handleInputChange} value={respostas.bloco4_plural_regra} onVerify={(k) => verificarResposta(k, true)} status={verificado.bloco4_plural_regra} isCreative={true} placeholder="Como se forma o plural?" />
+                    <hr />
+                    <h3>🧩 PARTE 3: Enigmas Supremos</h3>
+                    <div className="enigma" style={{backgroundColor: '#fff3e0', border: '3px solid #ff6f00'}}>
+                        <p><strong>ENIGMA 1:</strong> "tren-e-tren = X" | "X-e-dul = Y" | "Y-e-for-e-for = ?"</p>
+                    </div>
+                    <TarefaInput chave="bloco4_enigma1" label="6. Qual o resultado numérico?" onChange={handleInputChange} value={respostas.bloco4_enigma1} onVerify={verificarResposta} status={verificado.bloco4_enigma1} placeholder="Digite apenas o número Ex: 10" />
+                    <div className="enigma" style={{backgroundColor: '#e8f5e9', border: '3px solid #2e7d32', marginTop: '20px'}}>
+                        <p><strong>ENIGMA 2:</strong> "liu tamo tren flo-rulo zafen." (Dica: liu = tem)</p>
+                    </div>
+                    <div className="glifos-grid">
+                        <GlifoCenoures frase="liu tamo tren flo-rulo zafen." />
+                    </div>
+                    <TarefaInput chave="bloco4_enigma2" label="7. Traduza a frase do ENIGMA 2:" onChange={handleInputChange} value={respostas.bloco4_enigma2} onVerify={verificarResposta} status={verificado.bloco4_enigma2} placeholder="Tradução completa" />
+                    <hr />
+                    <h3>🏆 DESAFIO FINAL SUPREMO</h3>
+                    <div className="enigma" style={{backgroundColor: '#fce4ec', border: '4px double #c2185b'}}>
+                        <div className="frase" style={{fontSize: '1.2em', fontWeight: 'bold'}}>"sámi dul flo-miri luren kolen."</div>
+                    </div>
+                    <TarefaInput chave="bloco4_frase_complexa" label="8. Tradução do DESAFIO FINAL:" onChange={handleInputChange} value={respostas.bloco4_frase_complexa} onVerify={verificarResposta} status={verificado.bloco4_frase_complexa} placeholder="Sua tradução aqui" />
+                    {chavesBloco4.every(k => verificado[k] === 'acerto') && <div className="parabens">🏆 PARABÉNS, MESTRE DO CENOURÊS! 🏆</div>}
+                </div>
+
+            );
+
+            const renderExtra = () => (
+                <div style={{marginTop: '40px', borderTop: '2px dashed #555', paddingTop: '20px', textAlign: 'center'}}>
+                    <h2 style={{color: '#333'}}>🥕 Gerador de Glifos Cenourienses</h2>
+                    <p>Digite sua própria frase em Cenourês e veja o símbolo aparecer!</p>
+                    <input type="text" className="input-gerador" placeholder="Ex: liu rulo tren zafen" value={fraseVisual} onChange={(e) => setFraseVisual(e.target.value)} />
+                    {fraseVisual && <div style={{display: 'flex', justifyContent: 'center', marginTop: '20px'}}><GlifoCenoures frase={fraseVisual} animado={true} /></div>}
+                </div>
+            );
+
+            return (
+                <>
+                    <h1 style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                        <span>🥕 Cenourês</span>
+                        <span style={{ fontSize: "0.5em", fontStyle: "italic" }}>(Idioma artificial da Cenourinha)</span>
+                    </h1>
+                    <div className="instrucoes">
+                        <h2>📜 Instruções</h2>
+                        <p>A Cenourinha encontrou um caderno com frases escritas em um idioma desconhecido. Mas algumas palavras têm tradução… e outras não!</p>
+                        <p>Use lógica, interpretação e leitura para descobrir o significado.</p>
+                    </div>
+                    <div className="tabs">
+                        <button className={`tab-button ${blocoAtivo === 'bloco1' ? 'active' : ''}`} onClick={() => setBlocoAtivo('bloco1')}>BLOCO 1</button>
+                        <button className={`tab-button ${blocoAtivo === 'bloco2' ? 'active' : ''}`} onClick={() => setBlocoAtivo('bloco2')} disabled={nivelLiberado < 2}>BLOCO 2 {nivelLiberado < 2 && '🔒'}</button>
+                        <button className={`tab-button ${blocoAtivo === 'bloco3' ? 'active' : ''}`} onClick={() => setBlocoAtivo('bloco3')} disabled={nivelLiberado < 3}>BLOCO 3 {nivelLiberado < 3 && '🔒'}</button>
+                        <button className={`tab-button ${blocoAtivo === 'bloco4' ? 'active' : ''}`} onClick={() => setBlocoAtivo('bloco4')} disabled={nivelLiberado < 4} style={nivelLiberado >= 4 ? {background: 'linear-gradient(135deg, #ff6f00, #ff9800)', fontWeight: 'bold'} : {}}>BLOCO 4 ⚡ {nivelLiberado < 4 && '🔒'}</button>
+                    </div>
+                    {blocoAtivo === 'bloco1' && renderBloco1()}
+                    {blocoAtivo === 'bloco2' && renderBloco2()}
+                    {blocoAtivo === 'bloco3' && renderBloco3()}
+                    {blocoAtivo === 'bloco4' && renderBloco4()}
+                    {renderExtra()}
+                    <div style={{textAlign: 'center', marginTop: '30px', fontSize: '0.8em', color: '#6d4c41'}}>Atividade colaborativa da Cenourinha, profa. Débora e prof. Gabriel</div>
+                </>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
